@@ -1,0 +1,70 @@
+{
+  "info": {
+    "name": "CMMN Workflow API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Start Case",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/cases/start",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["cases", "start"]
+        }
+      }
+    },
+    {
+      "name": "Get Tasks",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/cases/tasks?candidateGroup=users",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["cases", "tasks"],
+          "query": [
+            {
+              "key": "candidateGroup",
+              "value": "users"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Complete Task",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userName\": \"John Doe\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/cases/tasks/{{taskId}}/complete",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["cases", "tasks", "{{taskId}}", "complete"]
+        }
+      }
+    }
+  ]
+}
