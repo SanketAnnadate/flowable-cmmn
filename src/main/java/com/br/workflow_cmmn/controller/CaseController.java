@@ -10,21 +10,29 @@ import org.flowable.cmmn.engine.impl.cfg.StandaloneInMemCmmnEngineConfiguration;
 import org.flowable.task.api.Task;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/cases")
-@RequiredArgsConstructor
 public class CaseController {
-    CmmnEngine cmmnEngine = new StandaloneInMemCmmnEngineConfiguration().buildCmmnEngine();
-    CmmnRepositoryService cmmnRepositoryService = cmmnEngine.getCmmnRepositoryService();
-    CmmnDeployment cmmnDeployment = cmmnRepositoryService.createDeployment()
-            .addClasspathResource("user-name-case.cmmn")
-            .name("User Name Input Case Deployment")
-            .deploy();
-    CmmnRuntimeService cmmnRuntimeService = cmmnEngine.getCmmnRuntimeService();
-    CmmnTaskService taskService = cmmnEngine.getCmmnTaskService();
+    private CmmnEngine cmmnEngine;
+    private CmmnRepositoryService cmmnRepositoryService;
+    private CmmnRuntimeService cmmnRuntimeService;
+    private CmmnTaskService taskService;
+
+    @PostConstruct
+    public void init() {
+        cmmnEngine = new StandaloneInMemCmmnEngineConfiguration().buildCmmnEngine();
+        cmmnRepositoryService = cmmnEngine.getCmmnRepositoryService();
+        cmmnRepositoryService.createDeployment()
+                .addClasspathResource("user-name-case.cmmn")
+                .name("User Name Input Case Deployment")
+                .deploy();
+        cmmnRuntimeService = cmmnEngine.getCmmnRuntimeService();
+        taskService = cmmnEngine.getCmmnTaskService();
+    }
 
     @PostMapping("/start")
     public String startCase() {
@@ -35,10 +43,15 @@ public class CaseController {
     }
 
     @GetMapping("/tasks")
-    public List<Task> getTasks(@RequestParam String candidateGroup) {
+    public List<Task> getTasks(@RequestParam(defaultValue = "users") String candidateGroup) {
         return taskService.createTaskQuery()
                 .taskCandidateGroup(candidateGroup)
                 .list();
+    }
+
+    @GetMapping("/tasks/all")
+    public List<Task> getAllTasks() {
+        return taskService.createTaskQuery().list();
     }
 
     @PostMapping("/tasks/{taskId}/complete")

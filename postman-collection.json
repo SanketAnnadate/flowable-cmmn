@@ -24,7 +24,7 @@
       }
     },
     {
-      "name": "Get Tasks",
+      "name": "Get Tasks by Group",
       "request": {
         "method": "GET",
         "header": [],
@@ -44,6 +44,20 @@
       }
     },
     {
+      "name": "Get All Tasks",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/cases/tasks/all",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["cases", "tasks", "all"]
+        }
+      }
+    },
+    {
       "name": "Complete Task",
       "request": {
         "method": "POST",
@@ -58,11 +72,11 @@
           "raw": "{\n  \"userName\": \"John Doe\"\n}"
         },
         "url": {
-          "raw": "http://localhost:8080/cases/tasks/{{taskId}}/complete",
+          "raw": "http://localhost:8080/cases/tasks/REPLACE_WITH_ACTUAL_TASK_ID/complete",
           "protocol": "http",
           "host": ["localhost"],
           "port": "8080",
-          "path": ["cases", "tasks", "{{taskId}}", "complete"]
+          "path": ["cases", "tasks", "REPLACE_WITH_ACTUAL_TASK_ID", "complete"]
         }
       }
     }
