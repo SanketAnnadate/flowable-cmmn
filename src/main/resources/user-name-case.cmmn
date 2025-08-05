@@ -10,10 +10,7 @@
   <case id="userNameInputCase" name="User Name Input Case">
     <casePlanModel id="casePlanModel1" name="User Enters Name" flowable:autoComplete="true">
 
-        <planItem id="planItem1" definitionRef="taskEnterName" name="Enter Your Name">
-          <entryCriterion id="entry1" sentryRef="sentry1"/>
-        </planItem>
-        <sentry id="sentry1"/>
+            <planItem id="planItem1" definitionRef="taskEnterName" name="Enter Your Name"/>
 
       <humanTask id="taskEnterName" name="Enter Your Name Task" flowable:candidateGroups="users">
         <extensionElements>

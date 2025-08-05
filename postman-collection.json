@@ -58,6 +58,20 @@
       }
     },
     {
+      "name": "Get Single Task",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/cases/tasks/REPLACE_WITH_ACTUAL_TASK_ID",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["cases", "tasks", "REPLACE_WITH_ACTUAL_TASK_ID"]
+        }
+      }
+    },
+    {
       "name": "Complete Task",
       "request": {
         "method": "POST",
@@ -77,6 +91,20 @@
           "host": ["localhost"],
           "port": "8080",
           "path": ["cases", "tasks", "REPLACE_WITH_ACTUAL_TASK_ID", "complete"]
+        }
+      }
+    },
+    {
+      "name": "Debug Info",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/cases/debug",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["cases", "debug"]
         }
       }
     }

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/cases")
@@ -43,19 +44,55 @@ public class CaseController {
     }
 
     @GetMapping("/tasks")
-    public List<Task> getTasks(@RequestParam(defaultValue = "users") String candidateGroup) {
+    public List<Map<String, Object>> getTasks(@RequestParam(defaultValue = "users") String candidateGroup) {
         return taskService.createTaskQuery()
                 .taskCandidateGroup(candidateGroup)
-                .list();
+                .list()
+                .stream()
+                .map(this::taskToMap)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/tasks/all")
-    public List<Task> getAllTasks() {
-        return taskService.createTaskQuery().list();
+    public List<Map<String, Object>> getAllTasks() {
+        return taskService.createTaskQuery()
+                .list()
+                .stream()
+                .map(this::taskToMap)
+                .collect(Collectors.toList());
     }
 
     @PostMapping("/tasks/{taskId}/complete")
-    public void completeTask(@PathVariable String taskId, @RequestBody Map<String, Object> variables) {
+    public String completeTask(@PathVariable String taskId, @RequestBody Map<String, Object> variables) {
+        Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+        if (task == null) {
+            return "Task not found: " + taskId;
+        }
         taskService.complete(taskId, variables);
+        return "Task completed successfully";
+    }
+
+    @GetMapping("/tasks/{taskId}")
+    public Map<String, Object> getTask(@PathVariable String taskId) {
+        Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+        return task != null ? taskToMap(task) : Map.of("error", "Task not found");
+    }
+
+    private Map<String, Object> taskToMap(Task task) {
+        return Map.of(
+            "id", task.getId(),
+            "name", task.getName(),
+            "assignee", task.getAssignee() != null ? task.getAssignee() : "",
+            "createTime", task.getCreateTime(),
+            "caseInstanceId", task.getScopeId()
+        );
+    }
+
+    @GetMapping("/debug")
+    public Map<String, Object> debug() {
+        return Map.of(
+            "totalTasks", taskService.createTaskQuery().count(),
+            "activeCases", cmmnRuntimeService.createCaseInstanceQuery().count()
+        );
     }
 }
