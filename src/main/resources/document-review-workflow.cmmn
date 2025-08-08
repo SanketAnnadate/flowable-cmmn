@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL" 
+             xmlns:flowable="http://flowable.org/cmmn"
+             targetNamespace="http://flowable.org/cmmn">
+
+    <case id="documentReviewCase" name="Document Review Workflow">
+        <casePlanModel id="documentReviewPlan" name="Document Review Plan">
+            
+            <!-- Document Upload Stage -->
+            <planItem id="uploadStage" definitionRef="uploadStageDefinition">
+                <itemControl>
+                    <requiredRule></requiredRule>
+                </itemControl>
+            </planItem>
+            
+            <!-- Document Processing Stage -->
+            <planItem id="processingStage" definitionRef="processingStageDefinition">
+                <itemControl>
+                    <requiredRule></requiredRule>
+                </itemControl>
+                <entryCriterion id="startProcessing">
+                    <planItemOnPart sourceRef="uploadStage">
+                        <standardEvent>complete</standardEvent>
+                    </planItemOnPart>
+                </entryCriterion>
+            </planItem>
+            
+            <!-- Review and Approval Stage -->
+            <planItem id="reviewStage" definitionRef="reviewStageDefinition">
+                <itemControl>
+                    <requiredRule></requiredRule>
+                </itemControl>
+                <entryCriterion id="startReview">
+                    <planItemOnPart sourceRef="processingStage">
+                        <standardEvent>complete</standardEvent>
+                    </planItemOnPart>
+                </entryCriterion>
+                <exitCriterion id="rejectAndReprocess">
+                    <planItemOnPart sourceRef="reviewTask">
+                        <standardEvent>complete</standardEvent>
+                    </planItemOnPart>
+                    <ifPart>
+                        <condition>${reviewDecision == 'REJECTED'}</condition>
+                    </ifPart>
+                </exitCriterion>
+            </planItem>
+            
+            <!-- Completion Milestone -->
+            <planItem id="workflowCompleted" definitionRef="completionMilestone">
+                <entryCriterion id="approvalComplete">
+                    <planItemOnPart sourceRef="reviewTask">
+                        <standardEvent>complete</standardEvent>
+                    </planItemOnPart>
+                    <ifPart>
+                        <condition>${reviewDecision == 'APPROVED'}</condition>
+                    </ifPart>
+                </entryCriterion>
+            </planItem>
+            
+            <!-- Reprocessing Sentry -->
+            <planItem id="reprocessingStage" definitionRef="processingStageDefinition">
+                <itemControl>
+                    <requiredRule></requiredRule>
+                </itemControl>
+                <entryCriterion id="triggerReprocessing">
+                    <planItemOnPart sourceRef="reviewStage">
+                        <standardEvent>exit</standardEvent>
+                    </planItemOnPart>
+                </entryCriterion>
+            </planItem>
+            
+            <!-- Stage Definitions -->
+            <stage id="uploadStageDefinition" name="Document Upload">
+                <planItem id="uploadTask" definitionRef="uploadHumanTask">
+                    <itemControl>
+                        <requiredRule></requiredRule>
+                    </itemControl>
+                </planItem>
+                
+                <planItem id="uploadValidation" definitionRef="validateUploadTask">
+                    <itemControl>
+                        <requiredRule></requiredRule>
+                    </itemControl>
+                    <entryCriterion>
+                        <planItemOnPart sourceRef="uploadTask">
+                            <standardEvent>complete</standardEvent>
+                        </planItemOnPart>
+                    </entryCriterion>
+                </planItem>
+            </stage>
+            
+            <stage id="processingStageDefinition" name="Document Processing">
+                <planItem id="processTask" definitionRef="processHumanTask">
+                    <itemControl>
+                        <requiredRule></requiredRule>
+                    </itemControl>
+                </planItem>
+                
+                <planItem id="processValidation" definitionRef="validateProcessTask">
+                    <itemControl>
+                        <requiredRule></requiredRule>
+                    </itemControl>
+                    <entryCriterion>
+                        <planItemOnPart sourceRef="processTask">
+                            <standardEvent>complete</standardEvent>
+                        </planItemOnPart>
+                    </entryCriterion>
+                </planItem>
+            </stage>
+            
+            <stage id="reviewStageDefinition" name="Review and Approval">
+                <planItem id="reviewTask" definitionRef="reviewHumanTask">
+                    <itemControl>
+                        <requiredRule></requiredRule>
+                    </itemControl>
+                </planItem>
+                
+                <planItem id="notificationTask" definitionRef="notifyParticipantsTask">
+                    <itemControl>
+                        <requiredRule></requiredRule>
+                    </itemControl>
+                    <entryCriterion>
+                        <planItemOnPart sourceRef="reviewTask">
+                            <standardEvent>complete</standardEvent>
+                        </planItemOnPart>
+                    </entryCriterion>
+                </planItem>
+            </stage>
+            
+            <!-- Task Definitions -->
+            <humanTask id="uploadHumanTask" name="Upload Document" 
+                      flowable:assignee="${uploader}" 
+                      flowable:dueDate="${uploadDueDate}"
+                      flowable:formKey="uploadForm">
+                <documentation>Upload the initial Excel document for processing</documentation>
+                <extensionElements>
+                    <flowable:taskListener event="create" class="com.br.workflow_cmmn.listener.TaskCreationListener"/>
+                    <flowable:taskListener event="complete" expression="${taskService.setVariable(task.id, 'uploadCompleted', true)}"/>
+                </extensionElements>
+            </humanTask>
+            
+            <task id="validateUploadTask" name="Validate Upload" flowable:type="java" flowable:class="com.br.workflow_cmmn.delegate.FileValidationDelegate">
+                <documentation>Validate uploaded file format and content</documentation>
+                <extensionElements>
+                    <flowable:field name="fileType">
+                        <flowable:string>excel</flowable:string>
+                    </flowable:field>
+                </extensionElements>
+            </task>
+            
+            <humanTask id="processHumanTask" name="Process Document" 
+                      flowable:assignee="${preparator}"
+                      flowable:dueDate="${processDueDate}"
+                      flowable:formKey="processForm">
+                <documentation>Download original file, process it, and upload the prepared version</documentation>
+                <extensionElements>
+                    <flowable:taskListener event="create" class="com.br.workflow_cmmn.listener.TaskCreationListener"/>
+                    <flowable:taskListener event="complete" expression="${taskService.setVariable(task.id, 'processCompleted', true)}"/>
+                </extensionElements>
+            </humanTask>
+            
+            <task id="validateProcessTask" name="Validate Processing" flowable:type="java" flowable:class="com.br.workflow_cmmn.delegate.ProcessValidationDelegate">
+                <documentation>Validate processed file meets requirements</documentation>
+                <extensionElements>
+                    <flowable:field name="validationType">
+                        <flowable:string>processing</flowable:string>
+                    </flowable:field>
+                </extensionElements>
+            </task>
+            
+            <humanTask id="reviewHumanTask" name="Review Documents" 
+                      flowable:assignee="${reviewer}"
+                      flowable:dueDate="${reviewDueDate}"
+                      flowable:formKey="reviewForm">
+                <documentation>Review both original and processed documents, then approve or reject</documentation>
+                <extensionElements>
+                    <flowable:taskListener event="create" class="com.br.workflow_cmmn.listener.TaskCreationListener"/>
+                    <flowable:taskListener event="complete" class="com.br.workflow_cmmn.listener.ReviewCompleteListener"/>
+                    <flowable:taskListener event="complete" expression="${execution.setVariable('reviewCompleted', true)}"/>
+                </extensionElements>
+            </humanTask>
+            
+            <task id="notifyParticipantsTask" name="Notify All Participants" 
+                  flowable:type="java" 
+                  flowable:class="com.br.workflow_cmmn.delegate.NotificationDelegate"
+                  flowable:async="true">
+                <documentation>Send completion notifications to all workflow participants</documentation>
+                <extensionElements>
+                    <flowable:field name="notificationType">
+                        <flowable:string>completion</flowable:string>
+                    </flowable:field>
+                    <flowable:executionListener event="start" expression="${execution.setVariable('notificationStarted', now())}"/>
+                </extensionElements>
+            </task>
+            
+            <milestone id="completionMilestone" name="Workflow Completed Successfully">
+                <documentation>Marks the successful completion of the document review workflow</documentation>
+            </milestone>
+            
+        </casePlanModel>
+        
+        <!-- Case-level variables -->
+        <extensionElements>
+            <flowable:caseStartEventListener expression="${execution.setVariable('caseStartTime', now())}"/>
+            <flowable:caseEndEventListener expression="${execution.setVariable('caseEndTime', now())}"/>
+        </extensionElements>
+        
+    </case>
+    
+</definitions>

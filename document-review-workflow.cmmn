@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL"
+             xmlns:flowable="http://flowable.org/cmmn"
+             targetNamespace="http://www.flowable.org/casedef">
+
+  <case id="documentReview" name="Document Review Workflow">
+    <casePlanModel id="reviewPlan" name="Document Review Plan" flowable:autoComplete="true">
+
+      <!-- Document Intake Stage -->
+      <planItem id="intakeStage" definitionRef="intakeStageTask"/>
+      
+      <!-- Initial Review -->
+      <planItem id="initialReview" definitionRef="initialReviewTask">
+        <entryCriterion sentryRef="intakeComplete"/>
+      </planItem>
+      
+      <!-- Parallel Review Tracks -->
+      <planItem id="legalReview" definitionRef="legalReviewTask">
+        <entryCriterion sentryRef="needsLegalReview"/>
+      </planItem>
+      
+      <planItem id="technicalReview" definitionRef="technicalReviewTask">
+        <entryCriterion sentryRef="needsTechnicalReview"/>
+      </planItem>
+      
+      <planItem id="complianceReview" definitionRef="complianceReviewTask">
+        <entryCriterion sentryRef="needsComplianceReview"/>
+      </planItem>
+      
+      <!-- Senior Review (if needed) -->
+      <planItem id="seniorReview" definitionRef="seniorReviewTask">
+        <entryCriterion sentryRef="needsSeniorReview"/>
+      </planItem>
+      
+      <!-- Final Approval -->
+      <planItem id="finalApproval" definitionRef="finalApprovalTask">
+        <entryCriterion sentryRef="allReviewsComplete"/>
+      </planItem>
+      
+      <!-- Document Publishing -->
+      <planItem id="publishDocument" definitionRef="publishDocumentTask">
+        <entryCriterion sentryRef="documentApproved"/>
+      </planItem>
+      
+      <!-- Rejection Handling -->
+      <planItem id="handleRejection" definitionRef="handleRejectionTask">
+        <entryCriterion sentryRef="documentRejected"/>
+      </planItem>
+      
+      <!-- Milestones -->
+      <planItem id="reviewCompleteMilestone" definitionRef="reviewComplete">
+        <entryCriterion sentryRef="workflowFinished"/>
+      </planItem>
+
+      <!-- Stage: Document Intake -->
+      <stage id="intakeStageTask" name="Document Intake">
+        <planItem id="uploadDocument" definitionRef="uploadDocumentTask"/>
+        <planItem id="validateDocument" definitionRef="validateDocumentTask"/>
+        <planItem id="classifyDocument" definitionRef="classifyDocumentTask"/>
+        
+        <humanTask id="uploadDocumentTask" name="Upload Document" 
+                   flowable:candidateGroups="document-submitters">
+          <extensionElements>
+            <flowable:formField id="documentTitle" name="Document Title" type="string" required="true"/>
+            <flowable:formField id="documentType" name="Document Type" type="enum" required="true">
+              <flowable:value id="policy" name="Policy Document"/>
+              <flowable:value id="procedure" name="Procedure"/>
+              <flowable:value id="contract" name="Contract"/>
+              <flowable:value id="specification" name="Technical Specification"/>
+              <flowable:value id="manual" name="User Manual"/>
+            </flowable:value>
+            <flowable:formField id="priority" name="Priority" type="enum" required="true">
+              <flowable:value id="low" name="Low"/>
+              <flowable:value id="medium" name="Medium"/>
+              <flowable:value id="high" name="High"/>
+              <flowable:value id="urgent" name="Urgent"/>
+            </flowable:value>
+            <flowable:formField id="documentUrl" name="Document URL" type="string" required="true"/>
+            <flowable:formField id="submitterNotes" name="Submitter Notes" type="string"/>
+          </extensionElements>
+        </humanTask>
+        
+        <serviceTask id="validateDocumentTask" name="Validate Document"
+                     flowable:class="com.company.document.DocumentValidationDelegate">
+          <extensionElements>
+            <flowable:field name="documentUrl">
+              <flowable:expression>${documentUrl}</flowable:expression>
+            </flowable:field>
+          </extensionElements>
+        </serviceTask>
+        
+        <humanTask id="classifyDocumentTask" name="Classify Document" 
+                   flowable:candidateGroups="document-coordinators">
+          <extensionElements>
+            <flowable:formField id="confidentialityLevel" name="Confidentiality" type="enum" required="true">
+              <flowable:value id="public" name="Public"/>
+              <flowable:value id="internal" name="Internal"/>
+              <flowable:value id="confidential" name="Confidential"/>
+              <flowable:value id="restricted" name="Restricted"/>
+            </flowable:value>
+            <flowable:formField id="reviewersRequired" name="Required Reviewers" type="string" required="true"/>
+            <flowable:formField id="estimatedReviewTime" name="Estimated Review Time (hours)" type="long"/>
+          </extensionElements>
+        </humanTask>
+      </stage>
+
+      <!-- Initial Review Task -->
+      <humanTask id="initialReviewTask" name="Initial Review" 
+                 flowable:candidateGroups="document-reviewers">
+        <extensionElements>
+          <flowable:formField id="contentAccuracy" name="Content Accuracy" type="enum" required="true">
+            <flowable:value id="excellent" name="Excellent"/>
+            <flowable:value id="good" name="Good"/>
+            <flowable:value id="needsWork" name="Needs Work"/>
+            <flowable:value id="poor" name="Poor"/>
+          </flowable:value>
+          <flowable:formField id="structureClarity" name="Structure & Clarity" type="enum" required="true">
+            <flowable:value id="excellent" name="Excellent"/>
+            <flowable:value id="good" name="Good"/>
+            <flowable:value id="needsWork" name="Needs Work"/>
+            <flowable:value id="poor" name="Poor"/>
+          </flowable:value>
+          <flowable:formField id="requiresLegalReview" name="Requires Legal Review" type="boolean"/>
+          <flowable:formField id="requiresTechnicalReview" name="Requires Technical Review" type="boolean"/>
+          <flowable:formField id="requiresComplianceReview" name="Requires Compliance Review" type="boolean"/>
+          <flowable:formField id="requiresSeniorReview" name="Requires Senior Review" type="boolean"/>
+          <flowable:formField id="initialReviewComments" name="Review Comments" type="string"/>
+          <flowable:formField id="recommendApproval" name="Recommend for Approval" type="boolean"/>
+        </extensionElements>
+      </humanTask>
+
+      <!-- Specialized Review Tasks -->
+      <humanTask id="legalReviewTask" name="Legal Review" 
+                 flowable:candidateGroups="legal-reviewers">
+        <extensionElements>
+          <flowable:formField id="legalCompliance" name="Legal Compliance" type="enum" required="true">
+            <flowable:value id="compliant" name="Compliant"/>
+            <flowable:value id="minorIssues" name="Minor Issues"/>
+            <flowable:value id="majorIssues" name="Major Issues"/>
+            <flowable:value id="nonCompliant" name="Non-Compliant"/>
+          </flowable:value>
+          <flowable:formField id="legalRiskLevel" name="Legal Risk Level" type="enum" required="true">
+            <flowable:value id="low" name="Low"/>
+            <flowable:value id="medium" name="Medium"/>
+            <flowable:value id="high" name="High"/>
+          </flowable:value>
+          <flowable:formField id="legalComments" name="Legal Comments" type="string"/>
+          <flowable:formField id="legalApproval" name="Legal Approval" type="boolean" required="true"/>
+        </extensionElements>
+      </humanTask>
+      
+      <humanTask id="technicalReviewTask" name="Technical Review" 
+                 flowable:candidateGroups="technical-reviewers">
+        <extensionElements>
+          <flowable:formField id="technicalAccuracy" name="Technical Accuracy" type="enum" required="true">
+            <flowable:value id="accurate" name="Accurate"/>
+            <flowable:value id="minorErrors" name="Minor Errors"/>
+            <flowable:value id="majorErrors" name="Major Errors"/>
+            <flowable:value id="inaccurate" name="Inaccurate"/>
+          </flowable:value>
+          <flowable:formField id="implementationFeasibility" name="Implementation Feasibility" type="enum" required="true">
+            <flowable:value id="feasible" name="Feasible"/>
+            <flowable:value id="challenging" name="Challenging"/>
+            <flowable:value id="difficult" name="Difficult"/>
+            <flowable:value id="notFeasible" name="Not Feasible"/>
+          </flowable:value>
+          <flowable:formField id="technicalComments" name="Technical Comments" type="string"/>
+          <flowable:formField id="technicalApproval" name="Technical Approval" type="boolean" required="true"/>
+        </extensionElements>
+      </humanTask>
+      
+      <humanTask id="complianceReviewTask" name="Compliance Review" 
+                 flowable:candidateGroups="compliance-reviewers">
+        <extensionElements>
+          <flowable:formField id="regulatoryCompliance" name="Regulatory Compliance" type="enum" required="true">
+            <flowable:value id="compliant" name="Compliant"/>
+            <flowable:value id="minorGaps" name="Minor Gaps"/>
+            <flowable:value id="majorGaps" name="Major Gaps"/>
+            <flowable:value id="nonCompliant" name="Non-Compliant"/>
+          </flowable:value>
+          <flowable:formField id="complianceComments" name="Compliance Comments" type="string"/>
+          <flowable:formField id="complianceApproval" name="Compliance Approval" type="boolean" required="true"/>
+        </extensionElements>
+      </humanTask>
+      
+      <humanTask id="seniorReviewTask" name="Senior Management Review" 
+                 flowable:candidateGroups="senior-management">
+        <extensionElements>
+          <flowable:formField id="strategicAlignment" name="Strategic Alignment" type="enum" required="true">
+            <flowable:value id="excellent" name="Excellent"/>
+            <flowable:value id="good" name="Good"/>
+            <flowable:value id="fair" name="Fair"/>
+            <flowable:value id="poor" name="Poor"/>
+          </flowable:value>
+          <flowable:formField id="businessImpact" name="Business Impact" type="enum" required="true">
+            <flowable:value id="high" name="High"/>
+            <flowable:value id="medium" name="Medium"/>
+            <flowable:value id="low" name="Low"/>
+          </flowable:value>
+          <flowable:formField id="seniorComments" name="Senior Review Comments" type="string"/>
+          <flowable:formField id="seniorApproval" name="Senior Approval" type="boolean" required="true"/>
+        </extensionElements>
+      </humanTask>
+
+      <!-- Final Approval Task -->
+      <humanTask id="finalApprovalTask" name="Final Approval" 
+                 flowable:candidateGroups="document-approvers">
+        <extensionElements>
+          <flowable:formField id="overallQuality" name="Overall Quality" type="enum" required="true">
+            <flowable:value id="excellent" name="Excellent"/>
+            <flowable:value id="good" name="Good"/>
+            <flowable:value id="acceptable" name="Acceptable"/>
+            <flowable:value id="needsImprovement" name="Needs Improvement"/>
+          </flowable:value>
+          <flowable:formField id="finalDecision" name="Final Decision" type="enum" required="true">
+            <flowable:value id="approve" name="Approve"/>
+            <flowable:value id="approveWithConditions" name="Approve with Conditions"/>
+            <flowable:value id="reject" name="Reject"/>
+            <flowable:value id="returnForRevision" name="Return for Revision"/>
+          </flowable:value>
+          <flowable:formField id="conditions" name="Approval Conditions" type="string"/>
+          <flowable:formField id="finalComments" name="Final Comments" type="string"/>
+        </extensionElements>
+      </humanTask>
+
+      <!-- Document Publishing -->
+      <serviceTask id="publishDocumentTask" name="Publish Document"
+                   flowable:class="com.company.document.DocumentPublishingDelegate">
+        <extensionElements>
+          <flowable:field name="documentId">
+            <flowable:expression>${documentId}</flowable:expression>
+          </flowable:field>
+          <flowable:field name="approvalDate">
+            <flowable:expression>${approvalDate}</flowable:expression>
+          </flowable:field>
+        </extensionElements>
+      </serviceTask>
+
+      <!-- Rejection Handling -->
+      <humanTask id="handleRejectionTask" name="Handle Document Rejection" 
+                 flowable:candidateGroups="document-coordinators">
+        <extensionElements>
+          <flowable:formField id="rejectionReason" name="Rejection Reason" type="string"/>
+          <flowable:formField id="nextAction" name="Next Action" type="enum" required="true">
+            <flowable:value id="revise" name="Request Revision"/>
+            <flowable:value id="withdraw" name="Withdraw Document"/>
+            <flowable:value id="escalate" name="Escalate to Management"/>
+          </flowable:value>
+          <flowable:formField id="revisionInstructions" name="Revision Instructions" type="string"/>
+        </extensionElements>
+      </humanTask>
+
+      <milestone id="reviewComplete" name="Document Review Complete"/>
+
+      <!-- Sentries (Business Rules) -->
+      <sentry id="intakeComplete">
+        <planItemOnPart sourceRef="intakeStage">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+      </sentry>
+      
+      <sentry id="needsLegalReview">
+        <planItemOnPart sourceRef="initialReview">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+        <ifPart>
+          <condition>${requiresLegalReview == true}</condition>
+        </ifPart>
+      </sentry>
+      
+      <sentry id="needsTechnicalReview">
+        <planItemOnPart sourceRef="initialReview">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+        <ifPart>
+          <condition>${requiresTechnicalReview == true}</condition>
+        </ifPart>
+      </sentry>
+      
+      <sentry id="needsComplianceReview">
+        <planItemOnPart sourceRef="initialReview">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+        <ifPart>
+          <condition>${requiresComplianceReview == true}</condition>
+        </ifPart>
+      </sentry>
+      
+      <sentry id="needsSeniorReview">
+        <planItemOnPart sourceRef="initialReview">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+        <ifPart>
+          <condition>${requiresSeniorReview == true || priority == 'urgent'}</condition>
+        </ifPart>
+      </sentry>
+      
+      <sentry id="allReviewsComplete">
+        <planItemOnPart sourceRef="initialReview">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+        <planItemOnPart sourceRef="legalReview">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+        <planItemOnPart sourceRef="technicalReview">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+        <planItemOnPart sourceRef="complianceReview">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+        <planItemOnPart sourceRef="seniorReview">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+      </sentry>
+      
+      <sentry id="documentApproved">
+        <planItemOnPart sourceRef="finalApproval">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+        <ifPart>
+          <condition>${finalDecision == 'approve' || finalDecision == 'approveWithConditions'}</condition>
+        </ifPart>
+      </sentry>
+      
+      <sentry id="documentRejected">
+        <planItemOnPart sourceRef="finalApproval">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+        <ifPart>
+          <condition>${finalDecision == 'reject' || finalDecision == 'returnForRevision'}</condition>
+        </ifPart>
+      </sentry>
+      
+      <sentry id="workflowFinished">
+        <planItemOnPart sourceRef="publishDocument">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+        <planItemOnPart sourceRef="handleRejection">
+          <standardEvent>complete</standardEvent>
+        </planItemOnPart>
+      </sentry>
+
+    </casePlanModel>
+  </case>
+</definitions>
