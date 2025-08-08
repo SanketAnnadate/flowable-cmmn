@@ -73,50 +73,30 @@
                             <div class="card-body p-2">
                                 <div class="row">
                                     <div class="col-md-8">
-                                        <h6 th:text="${task.taskName + ' Task'}"></h6>
+                                        <h6 th:text="${task.name}"></h6>
                                         <p class="mb-1">Task ID: <span th:text="${task.id}"></span></p>
                                         <p class="mb-1">Assignee: <span th:text="${task.assignee}"></span></p>
-                                        <p class="mb-1">Original: <span th:text="${task.originalFilePath ?: 'Not uploaded'}"></span></p>
-                                        <span class="badge" th:classappend="${task.status == 'COMPLETED' ? 'bg-success' : (task.status == 'REJECTED' ? 'bg-danger' : 'bg-warning')}" 
-                                              th:text="${task.status}"></span>
+                                        <p class="mb-1">Case: <span th:text="${task.scopeId}"></span></p>
+                                        <span class="badge bg-warning">ACTIVE</span>
                                     </div>
-                                    <div class="col-md-4" th:if="${task.taskName == 'UPLOAD' && task.status == 'PENDING'}">
-                                        <form th:action="@{'/task/upload/' + ${task.id}}" method="post" enctype="multipart/form-data">
-                                            <input type="hidden" name="userId" th:value="${user.id}">
-                                            <div class="mb-2">
-                                                <input type="file" class="form-control form-control-sm" name="file" accept=".xlsx,.xls" required>
-                                            </div>
-                                            <button type="submit" class="btn btn-primary btn-sm">Upload</button>
-                                        </form>
-                                    </div>
-                                    <div class="col-md-4" th:if="${task.taskName == 'PREPARE' && task.status == 'PENDING'}">
-                                        <form th:action="@{'/task/prepare/' + ${task.id}}" method="post" enctype="multipart/form-data">
-                                            <input type="hidden" name="userId" th:value="${user.id}">
-                                            <p class="small">Download: <a th:href="@{'/' + ${task.originalFilePath}}" th:text="${task.originalFilePath}"></a></p>
-                                            <div class="mb-2">
-                                                <input type="file" class="form-control form-control-sm" name="file" accept=".xlsx,.xls" required>
-                                            </div>
-                                            <button type="submit" class="btn btn-success btn-sm">Submit Prepared File</button>
-                                        </form>
-                                    </div>
-                                    <!-- Debug: Show action buttons for all tasks -->
-                                    <div class="col-md-4" th:if="${task.status == 'PENDING'}">
-                                        <div class="border p-2 bg-light">
-                                            <small class="text-muted">Debug Actions:</small>
-                                            <div th:if="${task.taskName == 'UPLOAD'}">
-                                                <form th:action="@{'/task/upload/' + ${task.id}}" method="post" enctype="multipart/form-data" class="mt-1">
-                                                    <input type="hidden" name="userId" th:value="${user.id}">
-                                                    <input type="file" class="form-control form-control-sm mb-1" name="file" accept=".xlsx,.xls" required>
-                                                    <button type="submit" class="btn btn-primary btn-sm">Upload File</button>
-                                                </form>
-                                            </div>
-                                            <div th:if="${task.taskName == 'PREPARE'}">
-                                                <form th:action="@{'/task/prepare/' + ${task.id}}" method="post" enctype="multipart/form-data" class="mt-1">
-                                                    <input type="hidden" name="userId" th:value="${user.id}">
-                                                    <input type="file" class="form-control form-control-sm mb-1" name="file" accept=".xlsx,.xls" required>
-                                                    <button type="submit" class="btn btn-success btn-sm">Prepare File</button>
-                                                </form>
-                                            </div>
+                                    <div class="col-md-4">
+                                        <div th:if="${task.name == 'Upload Document'}">
+                                            <form th:action="@{'/task/upload/' + ${task.id}}" method="post" enctype="multipart/form-data">
+                                                <input type="hidden" name="userId" th:value="${user.id}">
+                                                <div class="mb-2">
+                                                    <input type="file" class="form-control form-control-sm" name="file" accept=".xlsx,.xls" required>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary btn-sm">Upload File</button>
+                                            </form>
+                                        </div>
+                                        <div th:if="${task.name == 'Prepare Document'}">
+                                            <form th:action="@{'/task/prepare/' + ${task.id}}" method="post" enctype="multipart/form-data">
+                                                <input type="hidden" name="userId" th:value="${user.id}">
+                                                <div class="mb-2">
+                                                    <input type="file" class="form-control form-control-sm" name="file" accept=".xlsx,.xls" required>
+                                                </div>
+                                                <button type="submit" class="btn btn-success btn-sm">Submit Prepared File</button>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>

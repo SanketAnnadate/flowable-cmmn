@@ -22,7 +22,7 @@ public class SecurityConfig {
                 .disable()
             )
             .headers(headers -> headers
-                .frameOptions().sameOrigin()
+                .frameOptions(frameOptions -> frameOptions.sameOrigin())
             );
         
         return http.build();

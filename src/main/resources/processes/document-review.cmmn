@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL" 
+             xmlns:flowable="http://flowable.org/cmmn"
+             targetNamespace="http://flowable.org/cmmn">
+
+  <case id="documentReviewCase" name="Document Review Workflow">
+    <casePlanModel id="casePlanModel" name="Main Plan Model">
+
+      <humanTask id="uploadHumanTask" name="Upload Document"
+                 flowable:assignee="${uploader}"
+                 flowable:candidateUsers="2,6,10"/>
+
+      <humanTask id="prepareHumanTask" name="Prepare Document"
+                 flowable:assignee="${preparator}"
+                 flowable:candidateUsers="3,7,11"/>
+
+      <humanTask id="reviewHumanTask" name="Review Document"
+                 flowable:assignee="${reviewer}"
+                 flowable:candidateUsers="4,8,12"/>
+
+      <milestone id="completionMilestoneTask" name="Workflow Complete"/>
+
+      <planItem id="uploadTask" definitionRef="uploadHumanTask">
+        <itemControl>
+          <manualActivationRule>
+            <condition><![CDATA[${true}]]></condition>
+          </manualActivationRule>
+        </itemControl>
+      </planItem>
+
+      <planItem id="prepareTask" definitionRef="prepareHumanTask">
+        <entryCriterion id="entry-prepare-1">
+          <planItemOnPart sourceRef="uploadTask">
+            <standardEvent>complete</standardEvent>
+          </planItemOnPart>
+        </entryCriterion>
+      </planItem>
+
+      <planItem id="reviewTask" definitionRef="reviewHumanTask">
+        <entryCriterion id="entry-review-1">
+          <planItemOnPart sourceRef="prepareTask">
+            <standardEvent>complete</standardEvent>
+          </planItemOnPart>
+        </entryCriterion>
+      </planItem>
+
+      <planItem id="completionMilestone" definitionRef="completionMilestoneTask">
+        <entryCriterion id="entry-complete-1">
+          <planItemOnPart sourceRef="reviewTask">
+            <standardEvent>complete</standardEvent>
+          </planItemOnPart>
+          <ifPart>
+            <condition><![CDATA[${approved == true}]]></condition>
+          </ifPart>
+        </entryCriterion>
+      </planItem>
+
+    </casePlanModel>
+  </case>
+</definitions>

@@ -39,7 +39,7 @@
                 <div class="card text-center">
                     <div class="card-body">
                         <h5>Active Cases</h5>
-                        <h2 th:text="${#lists.size(activeCases)}"></h2>
+                        <h2 th:text="${activeCases}"></h2>
                     </div>
                 </div>
             </div>
@@ -138,65 +138,35 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h5>Workflow Instances</h5>
+                        <h5>Case Instances</h5>
                     </div>
                     <div class="card-body">
-                        <div class="accordion" id="workflowAccordion">
-                            <div th:each="workflow, iterStat : ${workflowInstances}" class="accordion-item">
-                                <h2 class="accordion-header" th:id="'heading' + ${iterStat.index}">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                                            th:data-bs-target="'#collapse' + ${iterStat.index}" aria-expanded="false">
-                                        <div class="d-flex justify-content-between w-100 me-3">
-                                            <span th:text="${workflow.workflowName}"></span>
-                                            <div>
-                                                <span class="badge me-2" th:classappend="${workflow.status == 'COMPLETED' ? 'bg-success' : (workflow.status == 'ACTIVE' ? 'bg-primary' : 'bg-secondary')}" 
-                                                      th:text="${workflow.status}"></span>
-                                                <small class="text-muted" th:text="'Started: ' + ${#temporals.format(workflow.actualStart, 'yyyy-MM-dd HH:mm')}"></small>
-                                            </div>
-                                        </div>
-                                    </button>
-                                </h2>
-                                <div th:id="'collapse' + ${iterStat.index}" class="accordion-collapse collapse" 
-                                     data-bs-parent="#workflowAccordion">
-                                    <div class="accordion-body">
-                                        <div class="row mb-3">
-                                            <div class="col-md-4"><strong>Uploader:</strong> <span th:text="${userNames[workflow.uploader] ?: workflow.uploader}"></span></div>
-                                            <div class="col-md-4"><strong>Preparator:</strong> <span th:text="${userNames[workflow.preparator] ?: workflow.preparator}"></span></div>
-                                            <div class="col-md-4"><strong>Reviewer:</strong> <span th:text="${userNames[workflow.reviewer] ?: workflow.reviewer}"></span></div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <strong>Instructions:</strong> <span th:text="${workflow.instructions}"></span>
-                                        </div>
-                                        <h6>Tasks:</h6>
-                                        <table class="table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>Task</th>
-                                                    <th>Assignee</th>
-                                                    <th>Status</th>
-                                                    <th>Created</th>
-                                                    <th>Completed</th>
-                                                    <th>Message</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr th:each="task : ${allTasks}" th:if="${task.workflowInstanceId == workflow.id}">
-                                                    <td th:text="${task.taskName}"></td>
-                                                    <td th:text="${userNames[task.assignee] ?: task.assignee}"></td>
-                                                    <td>
-                                                        <span class="badge" th:classappend="${task.status == 'COMPLETED' ? 'bg-success' : (task.status == 'REJECTED' ? 'bg-danger' : 'bg-warning')}" 
-                                                              th:text="${task.status}"></span>
-                                                    </td>
-                                                    <td th:text="${task.createdAt != null ? #temporals.format(task.createdAt, 'MM-dd HH:mm') : '-'}"></td>
-                                                    <td th:text="${task.completedAt != null ? #temporals.format(task.completedAt, 'MM-dd HH:mm') : '-'}"></td>
-                                                    <td th:text="${task.reviewerMessage ?: '-'}"></td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Case ID</th>
+                                    <th>Name</th>
+                                    <th>State</th>
+                                    <th>Started</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="caseInstance : ${caseInstances}">
+                                    <td th:text="${caseInstance.id}"></td>
+                                    <td th:text="${caseInstance.name}"></td>
+                                    <td>
+                                        <span class="badge bg-primary" th:text="${caseInstance.state}"></span>
+                                    </td>
+                                    <td th:text="${caseInstance.startTime != null ? #temporals.format(caseInstance.startTime, 'yyyy-MM-dd HH:mm') : '-'}"></td>
+                                    <td>
+                                        <form th:action="@{'/api/workflow/' + ${caseInstance.id} + '/terminate'}" method="post" style="display:inline;">
+                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Terminate this case?')">Terminate</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -206,35 +176,26 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h5>All Task Details</h5>
+                        <h5>Active Tasks</h5>
                     </div>
                     <div class="card-body">
                         <table class="table">
                             <thead>
                                 <tr>
+                                    <th>Task ID</th>
                                     <th>Task Name</th>
                                     <th>Assignee</th>
-                                    <th>Status</th>
-                                    <th>Original File</th>
-                                    <th>Prepared File</th>
+                                    <th>Case ID</th>
                                     <th>Created</th>
-                                    <th>Completed</th>
-                                    <th>Message</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr th:each="task : ${allTasks}">
-                                    <td th:text="${task.taskName}"></td>
+                                    <td th:text="${task.id}"></td>
+                                    <td th:text="${task.name}"></td>
                                     <td th:text="${userNames[task.assignee] ?: task.assignee}"></td>
-                                    <td>
-                                        <span class="badge" th:classappend="${task.status == 'COMPLETED' ? 'bg-success' : (task.status == 'REJECTED' ? 'bg-danger' : 'bg-warning')}" 
-                                              th:text="${task.status}"></span>
-                                    </td>
-                                    <td th:text="${task.originalFilePath ?: '-'}"></td>
-                                    <td th:text="${task.preparedFilePath ?: '-'}"></td>
-                                    <td th:text="${task.createdAt != null ? #temporals.format(task.createdAt, 'yyyy-MM-dd HH:mm') : '-'}"></td>
-                                    <td th:text="${task.completedAt != null ? #temporals.format(task.completedAt, 'yyyy-MM-dd HH:mm') : '-'}"></td>
-                                    <td th:text="${task.reviewerMessage ?: '-'}"></td>
+                                    <td th:text="${task.scopeId}"></td>
+                                    <td th:text="${task.createTime != null ? #temporals.format(task.createTime, 'yyyy-MM-dd HH:mm') : '-'}"></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -243,40 +204,7 @@
             </div>
         </div>
         
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>All Documents</h5>
-                    </div>
-                    <div class="card-body">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Title</th>
-                                    <th>Uploader</th>
-                                    <th>Reviewer</th>
-                                    <th>Status</th>
-                                    <th>Upload Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="doc : ${documents}">
-                                    <td th:text="${doc.title}"></td>
-                                    <td th:text="${doc.uploadedBy}"></td>
-                                    <td th:text="${doc.assignedReviewer}"></td>
-                                    <td>
-                                        <span class="badge" th:classappend="${doc.status == 'APPROVED' ? 'bg-success' : (doc.status == 'REJECTED' ? 'bg-danger' : 'bg-warning')}" 
-                                              th:text="${doc.status}"></span>
-                                    </td>
-                                    <td th:text="${#temporals.format(doc.uploadedAt, 'yyyy-MM-dd HH:mm')}"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

@@ -37,45 +37,25 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-8">
-                                        <h6 th:text="${task.taskName + ' Task'}"></h6>
+                                        <h6 th:text="${task.name}"></h6>
                                         <p class="text-muted mb-1">Task ID: <span th:text="${task.id}"></span></p>
                                         <p class="text-muted mb-1">Assignee: <span th:text="${task.assignee}"></span></p>
-                                        <p class="text-muted mb-1">Original File: <a th:href="@{'/' + ${task.originalFilePath}}" th:text="${task.originalFilePath}"></a></p>
-                                        <p class="text-muted mb-1" th:if="${task.preparedFilePath}">Prepared File: <a th:href="@{'/' + ${task.preparedFilePath}}" th:text="${task.preparedFilePath}"></a></p>
-                                        <p class="text-muted mb-1">Created: <span th:text="${#temporals.format(task.createdAt, 'yyyy-MM-dd HH:mm')}"></span></p>
-                                        <span class="badge" th:classappend="${task.status == 'COMPLETED' ? 'bg-success' : (task.status == 'REJECTED' ? 'bg-danger' : 'bg-warning')}" 
-                                              th:text="${task.status}"></span>
+                                        <p class="text-muted mb-1">Case: <span th:text="${task.scopeId}"></span></p>
+                                        <p class="text-muted mb-1">Created: <span th:text="${#temporals.format(task.createTime, 'yyyy-MM-dd HH:mm')}"></span></p>
+                                        <span class="badge bg-warning">ACTIVE</span>
                                     </div>
-                                    <div class="col-md-4" th:if="${task.taskName == 'REVIEW' && task.status == 'PENDING'}">
-                                        <form th:action="@{'/task/review/' + ${task.id}}" method="post">
-                                            <input type="hidden" name="userId" th:value="${user.id}">
-                                            <div class="mb-2">
-                                                <textarea class="form-control form-control-sm" name="message" placeholder="Review message" rows="2" required></textarea>
-                                            </div>
-                                            <div class="btn-group" role="group">
-                                                <button type="submit" name="decision" value="APPROVED" class="btn btn-success btn-sm">Approve</button>
-                                                <button type="submit" name="decision" value="REJECTED" class="btn btn-danger btn-sm">Reject</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                    <div class="col-md-4" th:if="${task.status != 'PENDING'}">
-                                        <p class="text-muted mb-0">Message:</p>
-                                        <p th:text="${task.reviewerMessage ?: 'No message'}"></p>
-                                    </div>
-                                    <!-- Debug: Show review actions for all pending tasks -->
-                                    <div class="col-md-4" th:if="${task.status == 'PENDING'}">
-                                        <div class="border p-2 bg-light">
-                                            <small class="text-muted">Debug Actions:</small>
-                                            <div th:if="${task.taskName == 'REVIEW'}">
-                                                <form th:action="@{'/task/review/' + ${task.id}}" method="post" class="mt-1">
-                                                    <input type="hidden" name="userId" th:value="${user.id}">
-                                                    <textarea class="form-control form-control-sm mb-1" name="message" placeholder="Review message" rows="2" required></textarea>
-                                                    <div class="btn-group" role="group">
-                                                        <button type="submit" name="decision" value="APPROVED" class="btn btn-success btn-sm">Approve</button>
-                                                        <button type="submit" name="decision" value="REJECTED" class="btn btn-danger btn-sm">Reject</button>
-                                                    </div>
-                                                </form>
-                                            </div>
+                                    <div class="col-md-4">
+                                        <div th:if="${task.name == 'Review Document'}">
+                                            <form th:action="@{'/task/review/' + ${task.id}}" method="post">
+                                                <input type="hidden" name="userId" th:value="${user.id}">
+                                                <div class="mb-2">
+                                                    <textarea class="form-control form-control-sm" name="message" placeholder="Review message" rows="2" required></textarea>
+                                                </div>
+                                                <div class="btn-group" role="group">
+                                                    <button type="submit" name="decision" value="APPROVED" class="btn btn-success btn-sm">Approve</button>
+                                                    <button type="submit" name="decision" value="REJECTED" class="btn btn-danger btn-sm">Reject</button>
+                                                </div>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>

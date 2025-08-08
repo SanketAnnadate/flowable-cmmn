@@ -37,28 +37,23 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-8">
-                                        <h6 th:text="${task.taskName + ' Task'}"></h6>
+                                        <h6 th:text="${task.name}"></h6>
                                         <p class="text-muted mb-1">Task ID: <span th:text="${task.id}"></span></p>
                                         <p class="text-muted mb-1">Assignee: <span th:text="${task.assignee}"></span></p>
-                                        <p class="text-muted mb-1">Original File: <a th:href="@{'/' + ${task.originalFilePath}}" th:text="${task.originalFilePath}"></a></p>
-                                        <p class="text-muted mb-1" th:if="${task.preparedFilePath}">Prepared File: <a th:href="@{'/' + ${task.preparedFilePath}}" th:text="${task.preparedFilePath}"></a></p>
-                                        <p class="text-muted mb-1">Created: <span th:text="${#temporals.format(task.createdAt, 'yyyy-MM-dd HH:mm')}"></span></p>
-                                        <p class="text-muted mb-1" th:if="${task.endDate}">Due: <span th:text="${#temporals.format(task.endDate, 'yyyy-MM-dd HH:mm')}"></span></p>
-                                        <span class="badge" th:classappend="${task.status == 'COMPLETED' ? 'bg-success' : (task.status == 'REJECTED' ? 'bg-danger' : 'bg-warning')}" 
-                                              th:text="${task.status}"></span>
+                                        <p class="text-muted mb-1">Case: <span th:text="${task.scopeId}"></span></p>
+                                        <p class="text-muted mb-1">Created: <span th:text="${#temporals.format(task.createTime, 'yyyy-MM-dd HH:mm')}"></span></p>
+                                        <span class="badge bg-warning">ACTIVE</span>
                                     </div>
-                                    <div class="col-md-4" th:if="${task.taskName == 'PREPARE' && task.status == 'PENDING'}">
-                                        <form th:action="@{'/task/prepare/' + ${task.id}}" method="post" enctype="multipart/form-data">
-                                            <input type="hidden" name="userId" th:value="${user.id}">
-                                            <p class="small">Download: <a th:href="@{'/' + ${task.originalFilePath}}" th:text="${task.originalFilePath}"></a></p>
-                                            <div class="mb-2">
-                                                <textarea class="form-control form-control-sm" name="comments" placeholder="Add comments about your preparation" rows="2"></textarea>
-                                            </div>
-                                            <div class="mb-2">
-                                                <input type="file" class="form-control form-control-sm" name="file" accept=".xlsx,.xls" required>
-                                            </div>
-                                            <button type="submit" class="btn btn-success btn-sm">Submit Prepared File</button>
-                                        </form>
+                                    <div class="col-md-4">
+                                        <div th:if="${task.name == 'Prepare Document'}">
+                                            <form th:action="@{'/task/prepare/' + ${task.id}}" method="post" enctype="multipart/form-data">
+                                                <input type="hidden" name="userId" th:value="${user.id}">
+                                                <div class="mb-2">
+                                                    <input type="file" class="form-control form-control-sm" name="file" accept=".xlsx,.xls" required>
+                                                </div>
+                                                <button type="submit" class="btn btn-success btn-sm">Submit Prepared File</button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
